@@ -1,1 +1,180 @@
+---------------------------------------------------------------------------------------------
+DL-1 linear Regression
+---------------------------------------------------------------------------------------------
 
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+
+# Fetch the Boston housing dataset
+data = fetch_openml(name='boston')
+
+# Create a DataFrame from the dataset
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df['PRICE'] = data.target
+
+# Drop any rows with missing values
+df.dropna(inplace=True)
+
+# Split the data into input features (X) and target variable (y)
+X = df.drop('PRICE', axis=1).values
+y = df['PRICE'].values
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scale the input features using standardization
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Create a Sequential model
+model = tf.keras.Sequential([
+    tf.keras.layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(1)
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train, y_train, epochs=100, batch_size=32, verbose=0)
+
+# Evaluate the model on the test set
+y_pred = model.predict(X_test)
+r2 = r2_score(y_test, y_pred)
+print("R-squared score on Test Set:", r2)
+
+-------------------------------------------------------------------------------------------------------------------------
+DL-2 IMDB Dataset
+---------------------------------------------------------------------------------------------
+
+import tensorflow as tf
+from tensorflow import keras
+
+# Load the IMDB dataset
+imdb = keras.datasets.imdb
+(train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=10000)
+
+# Preprocess the data
+train_data = keras.preprocessing.sequence.pad_sequences(train_data, value=0, padding='post', maxlen=250)
+test_data = keras.preprocessing.sequence.pad_sequences(test_data, value=0, padding='post', maxlen=250)
+
+# Build the model
+model = keras.Sequential([
+    keras.layers.Embedding(10000, 16),
+    keras.layers.GlobalAveragePooling1D(),
+    keras.layers.Dense(16, activation='relu'),
+    keras.layers.Dense(1, activation='sigmoid')
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Train the model
+model.fit(train_data, train_labels, epochs=10, batch_size=512, validation_data=(test_data, test_labels))
+
+# Evaluate the model
+loss, accuracy = model.evaluate(test_data, test_labels)
+print("Test Loss:", loss)
+print("Test Accuracy:", accuracy)
+
+------------------------------------------------------------------------------------------------------------------
+DL-3 OCR
+---------------------------------------------------------------------------------------------
+
+from tensorflow import keras
+from tensorflow.keras import models
+from tensorflow.keras import layers
+from keras.models import Sequential
+from keras.layers import Dense, Flatten
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+(xtrain, ytrain),(xtest, ytest) =keras.datasets.mnist.load_data()
+
+xtest.shape
+
+xtrain
+
+plt.imshow(xtrain[2])
+
+xtrain=xtrain/255         #converting value of pixel to 1 and 0
+xtest=xtest/255
+
+model=Sequential()
+model.add(Flatten(input_shape=(28, 28)))
+model.add(Dense(128,activation='relu'))
+model.add(Dense(10, activation='softmax'))
+
+model.summary()
+
+model.compile(loss='sparse_categorical_crossentropy', optimizer ='adam')
+
+model.fit(xtrain, ytrain, epochs=10, validation_split=0.2)
+
+yprob=model.predict(xtest)
+
+ypred=yprob.argmax(axis=1)
+
+from sklearn.metrics import accuracy_score
+accuracy_score(ytest, ypred)
+
+from numpy import reshape
+# model.predict(xtest[0].reshape(1,28,28).argmax(axis=1))
+plt.imshow(xtest[0])
+
+model.predict(xtest[0].reshape(1,28,28)).argmax(axis=1)
+
+----------------------------------------------------------------------------------------------------------
+DL-4 Fashion
+---------------------------------------------------------------------------------------------
+
+import tensorflow as tf
+import matplotlib.pyplot as plt
+from tensorflow import keras
+import numpy as np
+
+(x_train, y_train),(x_test, y_test)= keras.datasets.fashion_mnist.load_data()
+
+
+plt.imshow(x_train[1])
+
+
+x_train = x_train.astype('float32')/255.0
+x_test = x_test.astype('float32')/255.0
+
+
+x_train.shape
+# x_test
+# y_test
+# y_train
+
+
+model = keras.Sequential([
+    keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(28,28,1)),
+    keras.layers.MaxPooling2D((2,2)),
+    keras.layers.Dropout(0.25),
+    keras.layers.Conv2D(64, (3,3), activation='relu'),
+    keras.layers.MaxPooling2D((2,2)),
+    keras.layers.Dropout(0.25),
+    keras.layers.Conv2D(128, (3,3), activation='relu'),
+    keras.layers.Flatten(),
+    keras.layers.Dense(128, activation='relu'),
+    keras.layers.Dropout(0.25),
+    keras.layers.Dense(10, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))
+
+# Evaluate the model on the test data
+loss, accuracy = model.evaluate(x_test, y_test)
+print('Test Loss:', loss)
+print('Test Accuracy:', accuracy)
